@@ -1,4 +1,4 @@
-package com.example.myfirstapplication
+package com.kineruu.batterystats
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -7,6 +7,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import com.kineruu.batterystats.batterystats.BatteryRecord
 import kotlinx.coroutines.*
 
 class BatteryTrackingService : Service() {

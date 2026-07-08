@@ -1,4 +1,4 @@
-package com.example.myfirstapplication
+package com.kineruu.batterystats
 
 import android.content.Context
 import android.os.BatteryManager

@@ -1,4 +1,4 @@
-package com.example.myfirstapplication.ui.theme
+package com.kineruu.batterystats.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

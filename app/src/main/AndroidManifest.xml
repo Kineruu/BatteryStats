@@ -8,7 +8,7 @@
         android:theme="@style/Theme.MyFirstApplication">
 
         <activity
-            android:name=".MainActivity"
+            android:name=".batterystats.MainActivity"
             android:exported="true">
 
             <intent-filter>

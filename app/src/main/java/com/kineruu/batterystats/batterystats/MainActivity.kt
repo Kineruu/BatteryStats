@@ -1,4 +1,4 @@
-package com.example.myfirstapplication
+package com.kineruu.batterystats.batterystats
 
 // woo hoo lots of imports... why
 import android.os.Bundle
@@ -35,12 +35,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import com.kineruu.batterystats.BatteryReader
+import com.kineruu.batterystats.BatteryStorage
+import com.kineruu.batterystats.BatteryTrackingService
 
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-import com.example.myfirstapplication.ui.theme.MyFirstApplicationTheme
+import com.kineruu.batterystats.ui.theme.MyFirstApplicationTheme
 
 // I guess this is supposed to be above all normal classes?
 // Creates an object each time the service checks the battery... At least it should work like that I think
@@ -130,7 +134,7 @@ class MainActivity : ComponentActivity() {
                                                 context,
                                                 BatteryTrackingService::class.java
                                             )
-                                        androidx.core.content.ContextCompat.startForegroundService(
+                                        ContextCompat.startForegroundService(
                                             context,
                                             intent
                                         )
