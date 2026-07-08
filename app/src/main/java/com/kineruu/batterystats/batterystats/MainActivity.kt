@@ -84,7 +84,13 @@ class MainActivity : ComponentActivity() {
             }
 
             // Literally the MOST basic on/off system
-            var isTracking by remember { mutableStateOf(false) }
+            var isTracking by remember {
+                mutableStateOf(
+                    context
+                        .getSharedPreferences("settings", 0)
+                        .getBoolean("tracking", false)
+                )
+            }
 
             // Data is saved here
             val batteryRecords = BatteryStorage.records
@@ -138,6 +144,11 @@ class MainActivity : ComponentActivity() {
                                             context,
                                             intent
                                         )
+                                        context
+                                            .getSharedPreferences("settings", 0)
+                                            .edit()
+                                            .putBoolean("tracking", true)
+                                            .apply()
                                     } else {
                                         val intent =
                                             Intent(
@@ -145,6 +156,11 @@ class MainActivity : ComponentActivity() {
                                                 BatteryTrackingService::class.java
                                             )
                                         context.stopService(intent)
+                                        context
+                                            .getSharedPreferences("settings", 0)
+                                            .edit()
+                                            .putBoolean("tracing", false)
+                                            .apply()
                                     }
                                 }
                             )
