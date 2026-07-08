@@ -85,11 +85,7 @@ class MainActivity : ComponentActivity() {
 
             // Literally the MOST basic on/off system
             var isTracking by remember {
-                mutableStateOf(
-                    context
-                        .getSharedPreferences("settings", 0)
-                        .getBoolean("tracking", false)
-                )
+                mutableStateOf(false)
             }
 
             // Data is saved here
@@ -144,11 +140,7 @@ class MainActivity : ComponentActivity() {
                                             context,
                                             intent
                                         )
-                                        context
-                                            .getSharedPreferences("settings", 0)
-                                            .edit()
-                                            .putBoolean("tracking", true)
-                                            .apply()
+
                                     } else {
                                         val intent =
                                             Intent(
@@ -156,11 +148,7 @@ class MainActivity : ComponentActivity() {
                                                 BatteryTrackingService::class.java
                                             )
                                         context.stopService(intent)
-                                        context
-                                            .getSharedPreferences("settings", 0)
-                                            .edit()
-                                            .putBoolean("tracing", false)
-                                            .apply()
+
                                     }
                                 }
                             )
@@ -191,8 +179,11 @@ fun ShowBatteryStatistics(
     voltage: Float,
     batteryTemperature: Float
 ) {
+
+    val charging = if (milliAmps > 0) milliAmps else 0
+    val discharging = if (milliAmps < 0) milliAmps else 0
     Text(
-        text="$percentage % | $milliAmps mA | $voltage V | $batteryTemperature ℃",
+        text="$percentage % | $charging mA ~ $discharging mA | $voltage V | $batteryTemperature ℃",
         fontSize = 18.sp
     )
 }
@@ -243,12 +234,15 @@ fun ExportData(
     Button(
         onClick = {
             csvToSave = buildString {
-                appendLine("Timestamp | Percentage | mA | Voltage | Temperature")
+                appendLine("Timestamp | Percentage | Charging mA | Discharging mA | Voltage | Temperature")
                 for (record in records) {
+                    val charging = if (record.milliAmps > 0) record.milliAmps else 0
+                    val discharging = if (record.milliAmps < 0) -record.milliAmps else 0
                     appendLine(
                     "${formatTimestamp(record.timestamp)} | " +
                             "${record.percentage} | " +
-                            "${record.milliAmps} | " +
+                            "${charging} | " +
+                            "-${discharging} | " +
                             "${record.batteryVoltage} | " +
                             "${record.temperature}"
                     )
@@ -297,11 +291,14 @@ fun BatteryHistory(
     ) {
 
         items(records) { record ->
-
+            val charging = if (record.milliAmps > 0) record.milliAmps else 0
+            val discharging = if (record.milliAmps < 0) record.milliAmps else 0
             Text(
                 text =
                     "${formatTimestamp(record.timestamp)} | " +
                             "${record.percentage}% | " +
+                            "${charging} ~ " +
+                            "${discharging} | " +
                             "${record.milliAmps}mA | " +
                             "${record.batteryVoltage}V | " +
                             "${record.temperature}℃",
