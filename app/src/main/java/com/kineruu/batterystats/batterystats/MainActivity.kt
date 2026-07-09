@@ -54,7 +54,7 @@ data class BatteryRecord(
     // If you somehow manage to go below 0 or above 100 then I guess you did something wrong
     val percentage: Int,
     // Current in an out your phone
-    val milliAmps: Int,
+    val milliAmps: Int?,
     // Voltage in the phone
     val batteryVoltage: Float,
     // How hot is the phone
@@ -85,7 +85,7 @@ class MainActivity : ComponentActivity() {
 
             // Literally the MOST basic on/off system
             var isTracking by remember {
-                mutableStateOf(false)
+                mutableStateOf(BatteryTrackingService.isRunning)
             }
 
             // Data is saved here
@@ -175,16 +175,28 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun ShowBatteryStatistics(
     percentage: Int,
-    milliAmps: Int,
+    milliAmps: Int?,
     voltage: Float,
     batteryTemperature: Float
 ) {
 
-    val charging = if (milliAmps > 0) milliAmps else 0
-    val discharging = if (milliAmps < 0) milliAmps else 0
+    val chargingText =
+        when {
+            milliAmps == null -> "N/A"
+            milliAmps > 0 -> "$milliAmps"
+            else -> "0"
+        }
+
+    val dischargingText =
+        when {
+            milliAmps == null -> "N/A"
+            milliAmps < 0 -> "${-milliAmps}"
+            else -> "0"
+        }
+
     Text(
-        text="$percentage % | $charging mA ~ $discharging mA | $voltage V | $batteryTemperature ℃",
-        fontSize = 18.sp
+        text="$percentage % | $chargingText mA | -$dischargingText mA | $voltage V | $batteryTemperature ℃",
+        fontSize = 16.sp
     )
 }
 
@@ -234,10 +246,21 @@ fun ExportData(
     Button(
         onClick = {
             csvToSave = buildString {
-                appendLine("Timestamp | Percentage | Charging mA | Discharging mA | Voltage | Temperature")
+                appendLine("Timestamp | Percentage % | Charging mA | Discharging mA | Voltage V | Temperature ℃")
                 for (record in records) {
-                    val charging = if (record.milliAmps > 0) record.milliAmps else 0
-                    val discharging = if (record.milliAmps < 0) -record.milliAmps else 0
+                    val charging =
+                        when {
+                            record.milliAmps == null -> "N/A"
+                            record.milliAmps > 0 -> record.milliAmps.toString()
+                            else -> "0"
+                        }
+
+                    val discharging =
+                        when {
+                            record.milliAmps == null -> "N/A"
+                            record.milliAmps < 0 -> (-record.milliAmps).toString()
+                            else -> "0"
+                        }
                     appendLine(
                     "${formatTimestamp(record.timestamp)} | " +
                             "${record.percentage} | " +
@@ -291,18 +314,28 @@ fun BatteryHistory(
     ) {
 
         items(records) { record ->
-            val charging = if (record.milliAmps > 0) record.milliAmps else 0
-            val discharging = if (record.milliAmps < 0) record.milliAmps else 0
+            val chargingText =
+                when {
+                    record.milliAmps == null -> "N/A"
+                    record.milliAmps > 0 -> "$record.milliAmps"
+                    else -> "0"
+                }
+
+            val dischargingText =
+                when {
+                    record.milliAmps == null -> "N/A"
+                    record.milliAmps < 0 -> "${-record.milliAmps}"
+                    else -> "0"
+                }
             Text(
                 text =
                     "${formatTimestamp(record.timestamp)} | " +
-                            "${record.percentage}% | " +
-                            "${charging} ~ " +
-                            "${discharging} | " +
-                            "${record.milliAmps}mA | " +
-                            "${record.batteryVoltage}V | " +
-                            "${record.temperature}℃",
-                fontSize = 12.sp
+                    "${record.percentage}% | " +
+                    "${chargingText} mA | " +
+                    "-${dischargingText} mA | " +
+                    "${record.batteryVoltage} V | " +
+                    "${record.temperature}℃",
+                fontSize = 10.sp
             )
         }
     }

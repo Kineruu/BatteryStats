@@ -12,6 +12,10 @@ import kotlinx.coroutines.*
 
 class BatteryTrackingService : Service() {
 
+    companion object {
+        var isRunning = false
+    }
+
     // Coroutine for running the tracking loop
     private val serviceScope =
         CoroutineScope(
@@ -44,6 +48,8 @@ class BatteryTrackingService : Service() {
         flags: Int,
         startId: Int
     ): Int {
+
+        isRunning = true
 
         // Create notification channel
         createNotificationChannel()
@@ -90,6 +96,7 @@ class BatteryTrackingService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        isRunning = false
         serviceScope.cancel()
     }
 

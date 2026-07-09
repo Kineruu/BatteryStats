@@ -26,11 +26,16 @@ class BatteryReader(
 
     // Current: Gives microamps (µA)
     // Convert it to milliamps (mA)
-    fun getCurrentMilliAmps(): Int {
-
-        return batteryManager.getIntProperty(
+    fun getCurrentMilliAmps(): Int? {
+        val current = batteryManager.getIntProperty(
             BatteryManager.BATTERY_PROPERTY_CURRENT_NOW
-        ) / 1000
+        )
+
+        if (current == Int.MIN_VALUE || current == 0) {
+            return null
+        }
+
+        return current / 1000
     }
 
 
