@@ -20,23 +20,18 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-
 class BatteryTrackingService : Service() {
-
     companion object {
         var isRunning = false
 
     }
-
     private val serviceScope =
         CoroutineScope(
             Dispatchers.Default + SupervisorJob()
         )
-
     private var trackingJob: Job? = null
     private val CHANNEL_ID =
         "BatteryTrackingChannel"
-
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel =
@@ -53,7 +48,6 @@ class BatteryTrackingService : Service() {
             manager.createNotificationChannel(channel)
         }
     }
-
     override fun onStartCommand(
         intent: Intent?,
         flags: Int,
@@ -90,38 +84,24 @@ class BatteryTrackingService : Service() {
 
         trackingJob =
             serviceScope.launch {
-
                 val batteryReader =
                     BatteryReader(
                         this@BatteryTrackingService
                     )
-
                 while (isActive) {
 
-                    val percentage =
-                        batteryReader.getPercentage()
-
-                    val microAmps =
-                        batteryReader.getCurrentMicroAmps()
-
-                    val voltage =
-                        batteryReader.getVoltage()
-
-                    val temperature =
-                        batteryReader.getTemperature()
+                    val percentage = batteryReader.getPercentage()
+                    val rawCurrent = batteryReader.getRawCurrent()
+                    val voltage = batteryReader.getVoltage()
+                    val temperature = batteryReader.getTemperature()
 
                     BatteryStorage.records.add(
                         BatteryRecord(
-                            timestamp =
-                                System.currentTimeMillis(),
-                            percentage =
-                                percentage,
-                            microAmps =
-                                microAmps,
-                            batteryVoltage =
-                                voltage,
-                            temperature =
-                                temperature
+                            timestamp = System.currentTimeMillis(),
+                            percentage = percentage,
+                            rawCurrent = rawCurrent,
+                            batteryVoltage = voltage,
+                            temperature = temperature
                         )
                     )
                     delay(5000)
@@ -129,23 +109,15 @@ class BatteryTrackingService : Service() {
             }
         return START_STICKY
     }
-
     override fun onDestroy() {
-
         trackingJob?.cancel()
-
         serviceScope.cancel()
-
         isRunning = false
         super.onDestroy()
-
     }
-
     override fun onBind(
         intent: Intent?
     ): IBinder? {
-
         return null
-
     }
 }

@@ -5,21 +5,14 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.kineruu.batterystats.batterystats.BatteryRecord
-import com.kineruu.batterystats.batterystats.CurrentInput
-import com.kineruu.batterystats.batterystats.CurrentOutput
-
+import com.kineruu.batterystats.batterystats.RawCurrentUnit
+import com.kineruu.batterystats.batterystats.DisplayCurrentUnit
 
 object BatteryStorage {
-
     // All collected battery measurements
     val records = mutableStateListOf<BatteryRecord>()
-
-
     // Format the phone gives us
-    var currentInput by mutableStateOf(CurrentInput.MICROAMPS)
-
-
+    var rawCurrentUnit by mutableStateOf(RawCurrentUnit.MICROAMPS)
     // Format the user wants to see
-    var currentOutput by mutableStateOf(CurrentOutput.MILLIAMPS)
-
+    var displayCurrentUnit by mutableStateOf(DisplayCurrentUnit.MILLIAMPS)
 }

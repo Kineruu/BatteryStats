@@ -1,12 +1,11 @@
 package com.kineruu.batterystats.batterystats
 
-
-enum class CurrentInput {
-    MILLIAMPS,
-    MICROAMPS
+enum class RawCurrentUnit {
+    MICROAMPS,
+    MILLIAMPS
 }
 
-enum class CurrentOutput {
-    MILLIAMPS,
-    MICROAMPS
+enum class DisplayCurrentUnit {
+    MICROAMPS,
+    MILLIAMPS
 }

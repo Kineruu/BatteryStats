@@ -1,6 +1,5 @@
 package com.kineruu.batterystats.batterystats
 
-
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -47,15 +46,10 @@ import java.util.Date
 import java.util.Locale
 
 data class BatteryRecord(
-
     val timestamp: Long,
-
     val percentage: Int,
-
-    val microAmps: Int?,
-
+    val rawCurrent: Int?,
     val batteryVoltage: Float,
-
     val temperature: Float
 
 )
@@ -67,14 +61,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             val context = LocalContext.current
             var isTracking by remember {
-
                 mutableStateOf(
                     BatteryTrackingService.isRunning
                 )
             }
-
-            val batteryRecords =
-                BatteryStorage.records
+            val batteryRecords = BatteryStorage.records
 
             MyFirstApplicationTheme {
                 Scaffold(
@@ -103,17 +94,10 @@ class MainActivity : ComponentActivity() {
                             batteryRecords.lastOrNull()
 
                         ShowBatteryStatistics(
-                            percentage =
-                                latestRecord?.percentage ?: 0,
-
-                            rawMicroAmps =
-                                latestRecord?.microAmps ?: 0,
-
-                            voltage =
-                                latestRecord?.batteryVoltage ?: 0f,
-
-                            batteryTemperature =
-                                latestRecord?.temperature ?: 0f
+                            percentage = latestRecord?.percentage ?: 0,
+                            rawCurrent = latestRecord?.rawCurrent ?: 0,
+                            voltage = latestRecord?.batteryVoltage ?: 0f,
+                            batteryTemperature = latestRecord?.temperature ?: 0f
                         )
 
                         Spacer(
@@ -130,10 +114,8 @@ class MainActivity : ComponentActivity() {
                                 Arrangement.spacedBy(4.dp)
                         ) {
                             TrackingButton(
-                                modifier =
-                                    Modifier.weight(1f),
-                                isTracking =
-                                    isTracking,
+                                modifier = Modifier.weight(1f),
+                                isTracking = isTracking,
 
                                 onToggle = {
                                     isTracking = !isTracking
@@ -153,16 +135,12 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                             ExportData(
-                                modifier =
-                                    Modifier.weight(1f),
-                                records =
-                                    batteryRecords
+                                modifier = Modifier.weight(1f),
+                                records = batteryRecords
                             )
                             ClearButton(
-                                modifier =
-                                    Modifier.weight(1f),
-                                onClear = {
-                                    batteryRecords.clear()
+                                modifier = Modifier.weight(1f),
+                                onClear = { batteryRecords.clear()
                                 }
                             )
                         }
@@ -172,10 +150,8 @@ class MainActivity : ComponentActivity() {
                         Spacer(Modifier.height(10.dp))
 
                         BatteryHistory(
-                            records =
-                                batteryRecords,
-                            modifier =
-                                Modifier.weight(1f)
+                            records = batteryRecords,
+                            modifier = Modifier.weight(1f)
                         )
                     }
                 }
@@ -186,32 +162,28 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun CurrentModeSelector() {
-
     val modes =
         listOf(
-
             Pair(
-                CurrentInput.MILLIAMPS,
-                CurrentOutput.MILLIAMPS
+                RawCurrentUnit.MILLIAMPS,
+                DisplayCurrentUnit.MILLIAMPS
             ),
 
             Pair(
-                CurrentInput.MILLIAMPS,
-                CurrentOutput.MICROAMPS
+                RawCurrentUnit.MILLIAMPS,
+                DisplayCurrentUnit.MICROAMPS
             ),
 
             Pair(
-                CurrentInput.MICROAMPS,
-                CurrentOutput.MILLIAMPS
+                RawCurrentUnit.MICROAMPS,
+                DisplayCurrentUnit.MILLIAMPS
             ),
 
             Pair(
-                CurrentInput.MICROAMPS,
-                CurrentOutput.MICROAMPS
+                RawCurrentUnit.MICROAMPS,
+                DisplayCurrentUnit.MICROAMPS
             )
-
         )
-
     Row(
         modifier =
             Modifier
@@ -224,21 +196,18 @@ fun CurrentModeSelector() {
     ) {
         modes.forEach { mode ->
             Button(
-                modifier =
-                    Modifier.weight(1f),
-
+                modifier = Modifier.weight(1f),
                 onClick = {
-                    BatteryStorage.currentInput =
+                    BatteryStorage.rawCurrentUnit =
                         mode.first
 
-                    BatteryStorage.currentOutput =
+                    BatteryStorage.displayCurrentUnit =
                         mode.second
                 }
             ) {
                 Text(
                     text =
-                        "${if(mode.first == CurrentInput.MILLIAMPS) "mA" else "µA"} → " +
-                                "${if(mode.second == CurrentOutput.MILLIAMPS) "mA" else "µA"}",
+                        "${if(mode.first == RawCurrentUnit.MILLIAMPS) "mA" else "µA"} → " + "${if(mode.second == DisplayCurrentUnit.MILLIAMPS) "mA" else "µA"}",
                     fontSize =
                         10.sp
                 )
@@ -250,24 +219,26 @@ fun CurrentModeSelector() {
 @Composable
 fun ShowBatteryStatistics(
     percentage: Int,
-    rawMicroAmps: Int?,
+    rawCurrent: Int?,
     voltage: Float,
     batteryTemperature: Float
 ) {
     val chargingText =
-        if (rawMicroAmps != null && rawMicroAmps > 0)
+        if (rawCurrent != null && rawCurrent > 0)
             BatteryReader.convertCurrent(
-                rawMicroAmps,
-                BatteryStorage.currentOutput
+                rawCurrent,
+                BatteryStorage.rawCurrentUnit,
+                BatteryStorage.displayCurrentUnit
             )
         else
             "0"
 
     val dischargingText =
-        if (rawMicroAmps != null && rawMicroAmps < 0)
+        if (rawCurrent != null && rawCurrent < 0)
             BatteryReader.convertCurrent(
-                -rawMicroAmps,
-                BatteryStorage.currentOutput
+                -rawCurrent,
+                BatteryStorage.rawCurrentUnit,
+                BatteryStorage.displayCurrentUnit
             )
         else
             "0"
@@ -290,9 +261,7 @@ fun TrackingButton(
     onToggle: () -> Unit
 ) {
     Button(
-        modifier =
-            modifier,
-
+        modifier = modifier,
         onClick = {
             onToggle()
         }
@@ -318,7 +287,6 @@ fun ExportData(
     var csvToSave by remember {
         mutableStateOf("")
     }
-
     val createFile =
         rememberLauncherForActivityResult(
             contract =
@@ -342,50 +310,71 @@ fun ExportData(
             csvToSave =
                 buildString {
                     appendLine(
-                        "Timestamp | Percentage | Charging µA | Discharging µA | Charging mA | Discharging mA | Voltage | Temperature"
+                        "Timestamp | Percentage | Raw Unit | Raw Charging | Raw Discharging | Charging µA | Discharging µA | Charging mA | Discharging mA | Voltage | Temperature"
                     )
                     records.forEach { record ->
-                        val chargingMicro =
+                        val rawCharging =
                             if (
-                                record.microAmps != null &&
-                                record.microAmps > 0
+                                record.rawCurrent != null &&
+                                record.rawCurrent > 0
                             )
-                                record.microAmps
+                                record.rawCurrent
                             else
                                 0
+
+                        val rawDischarging =
+                            if (
+                                record.rawCurrent != null &&
+                                record.rawCurrent < 0
+                            )
+                                -record.rawCurrent
+                            else
+                                0
+
+                        val chargingMicro =
+                            if (BatteryStorage.rawCurrentUnit == RawCurrentUnit.MICROAMPS)
+                                rawCharging
+                            else
+                                rawCharging * 1000
 
                         val dischargingMicro =
-                            if (
-                                record.microAmps != null &&
-                                record.microAmps < 0
-                            )
-                                -record.microAmps
+                            if (BatteryStorage.rawCurrentUnit == RawCurrentUnit.MICROAMPS)
+                                rawDischarging
                             else
-                                0
+                                rawDischarging * 1000
 
                         val chargingMilli =
-                            chargingMicro / 1000f
+                            if (BatteryStorage.rawCurrentUnit == RawCurrentUnit.MILLIAMPS)
+                                rawCharging.toFloat()
+                            else
+                                rawCharging / 1000f
 
                         val dischargingMilli =
-                            dischargingMicro / 1000f
+                            if (BatteryStorage.rawCurrentUnit == RawCurrentUnit.MILLIAMPS)
+                                rawDischarging.toFloat()
+                            else
+                                rawDischarging / 1000f
 
                         appendLine(
-                            "${formatTimestamp(record.timestamp)} | " +
-                                    "${record.percentage}% | " +
-                                    "$chargingMicro | " +
-                                    "$dischargingMicro | " +
-                                    String.format(
-                                        Locale.getDefault(),
-                                        "%.2f",
-                                        chargingMilli
-                                    ) + " | " +
-                                    String.format(
-                                        Locale.getDefault(),
-                                        "%.2f",
-                                        dischargingMilli
-                                    ) + " | " +
-                                    "${record.batteryVoltage} | " +
-                                    "${record.temperature}"
+                    "${formatTimestamp(record.timestamp)} | " +
+                            "${record.percentage}% | " +
+                            "${BatteryStorage.rawCurrentUnit} | " +
+                            "$rawCharging | " +
+                            "$rawDischarging | " +
+                            "$chargingMicro | " +
+                            "$dischargingMicro | " +
+                            String.format(
+                                Locale.getDefault(),
+                                "%.2f",
+                                chargingMilli
+                            ) + " | " +
+                            String.format(
+                                Locale.getDefault(),
+                                "%.2f",
+                                dischargingMilli
+                            ) + " | " +
+                            "${record.batteryVoltage} | " +
+                            "${record.temperature}"
                         )
                     }
                 }
@@ -428,24 +417,26 @@ fun BatteryHistory(
         items(records) { record ->
             val chargingText =
                 if (
-                    record.microAmps != null &&
-                    record.microAmps > 0
+                    record.rawCurrent != null &&
+                    record.rawCurrent > 0
                 )
                     BatteryReader.convertCurrent(
-                        record.microAmps,
-                        BatteryStorage.currentOutput
+                        record.rawCurrent,
+                        BatteryStorage.rawCurrentUnit,
+                        BatteryStorage.displayCurrentUnit
                     )
                 else
                     "0"
 
             val dischargingText =
                 if (
-                    record.microAmps != null &&
-                    record.microAmps < 0
+                    record.rawCurrent != null &&
+                    record.rawCurrent < 0
                 )
                     BatteryReader.convertCurrent(
-                        -record.microAmps,
-                        BatteryStorage.currentOutput
+                        -record.rawCurrent,
+                        BatteryStorage.rawCurrentUnit,
+                        BatteryStorage.displayCurrentUnit
                     )
                 else
                     "0"
